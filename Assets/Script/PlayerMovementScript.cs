@@ -10,9 +10,19 @@ public class PlayerMovementScript : MonoBehaviour
     [SerializeField] float runSpeed = 5f;
     [SerializeField] float jumpSpeed = 5f;
     [SerializeField] float climbSpeed = 5f;
-    [SerializeField] float playerHp;
-    [SerializeField] bool canPain = true;
 
+    private float maxHealth = 3;
+    public float playerHealth;
+    public float KBForce;
+    public float KBCounter;
+    public float KBTotalTime;
+    public float horizontal;
+    public bool canPain;
+
+    public bool KnockFromRight;
+    public bool isDead;
+
+    public SpriteRenderer spriteRenderer;
     Vector2 moveInput;
     Rigidbody2D myRigidBody;
     Animator myAnimator;
@@ -28,7 +38,9 @@ public class PlayerMovementScript : MonoBehaviour
         myCapsuleCollider = GetComponent<CapsuleCollider2D>();
         myFeetCollier = GetComponent<BoxCollider2D>();
         gravityScaleAtStart = myRigidBody.gravityScale;
-        playerHp = 10f;
+        playerHealth = maxHealth;
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        canPain = true;
     }
 
     void Update()
@@ -37,11 +49,33 @@ public class PlayerMovementScript : MonoBehaviour
         {
             return;
         }
+        horizontal = Input.GetAxis("Horizontal");
         Run();
         ClimbLadder();
         FlipSprite();
         Die();
         Bouncing();
+    }
+
+    private void FixedUpdate()
+    {
+        if (KBCounter <= 0)
+        {
+            myRigidBody.velocity = new Vector2(horizontal * runSpeed, myRigidBody.velocity.y);
+        }
+        else
+        {
+            if (KnockFromRight == true)
+            {
+                myRigidBody.velocity = new Vector2(-KBForce, KBForce);
+            }
+            if (KnockFromRight == false)
+            {
+                myRigidBody.velocity = new Vector2(KBForce, KBForce);
+            }
+
+            KBCounter -= Time.deltaTime;
+        }
     }
 
     void ClimbLadder()
@@ -87,10 +121,12 @@ public class PlayerMovementScript : MonoBehaviour
         {
             return;
         }
+
         if (!(myFeetCollier.IsTouchingLayers(LayerMask.GetMask("Ground")) || myFeetCollier.IsTouchingLayers(LayerMask.GetMask("Climbing"))))
         {
             return;
         }
+
         if (inputValue.isPressed)
         {
             myRigidBody.velocity += new Vector2(0f, jumpSpeed);
@@ -108,14 +144,15 @@ public class PlayerMovementScript : MonoBehaviour
 
     void Die()
     {
-        if (playerHp <= 0)
+        if (playerHealth <= 0)
         {
-            playerHp = 0;
+            playerHealth = 0;
             Time.timeScale = 0;
         }
         if (myCapsuleCollider.IsTouchingLayers(LayerMask.GetMask("Enemies")) && canPain)
         {
             StartCoroutine(Pain());
+            BlinkSprites(1.0f, 0.15f);
         }
     }
 
@@ -123,10 +160,10 @@ public class PlayerMovementScript : MonoBehaviour
     {
         if (canPain)
         {
-            playerHp -= 1;
+            playerHealth -= 1;
             canPain = false;
         }
-       
+
         yield return new WaitForSeconds(2.0f);
         canPain = true;
     }
@@ -137,5 +174,35 @@ public class PlayerMovementScript : MonoBehaviour
         {
             AudioManager.instance.PlaySFX(AudioManager.instance.bounceSound);
         }
+    }
+
+    public void BlinkSprites(float duration, float timeBtwBlinks)
+    {
+        StartCoroutine(BlinderSpritesCoroutine(duration, timeBtwBlinks));
+    }
+
+    IEnumerator BlinderSpritesCoroutine(float duration, float timeBtwBlinks)
+    {
+        float elapsedTime = 0f;
+        float blinkElapsed = timeBtwBlinks;
+        bool visible = false;
+        while (elapsedTime < duration)
+        {
+            if (blinkElapsed >= timeBtwBlinks)
+            {
+                ToggleSprites(visible);
+                visible = !visible;
+                blinkElapsed = 0f;
+            }
+            blinkElapsed += Time.deltaTime;
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+        ToggleSprites(true);
+    }
+
+    private void ToggleSprites(bool visible)
+    {
+        spriteRenderer.enabled = visible;
     }
 }
