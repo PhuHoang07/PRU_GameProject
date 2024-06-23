@@ -9,17 +9,7 @@ public class HealthBar : MonoBehaviour
     [SerializeField] Sprite heartEmpty;
     [SerializeField] List<Image> hearts;
 
-    private void Awake()
-    {
-        PlayerDie.onHPLost += UpdateUI;
-    }
-
-    private void OnDestroy()
-    {
-        PlayerDie.onHPLost -= UpdateUI;
-    }
-
-    private void UpdateUI(float hp)
+    public void UpdateUI(float hp)
     {
         for (int i = 0; i < hearts.Count; i++)
         {

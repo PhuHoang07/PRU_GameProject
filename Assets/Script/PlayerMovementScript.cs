@@ -13,34 +13,39 @@ public class PlayerMovementScript : MonoBehaviour
 
     private float maxHealth = 3;
     public float playerHealth;
-    public float KBForce;
-    public float KBCounter;
-    public float KBTotalTime;
-    public float horizontal;
     public bool canPain;
 
-    public bool KnockFromRight;
-    public bool isDead;
+    public float knockbackDuration = 1f;
+    public float knockbackForce = 20f;
 
-    public SpriteRenderer spriteRenderer;
+    public GameObject gameOverScreen;
+
+    private SpriteRenderer spriteRenderer;
     Vector2 moveInput;
     Rigidbody2D myRigidBody;
     Animator myAnimator;
     CapsuleCollider2D myCapsuleCollider;
-    BoxCollider2D myFeetCollier;
+    BoxCollider2D myFeetCollider;
     float gravityScaleAtStart;
-    bool isAlive = true;
+    bool isAlive;
+
+    private HealthBar healthBar;
 
     void Start()
     {
         myRigidBody = GetComponent<Rigidbody2D>();
         myAnimator = GetComponent<Animator>();
         myCapsuleCollider = GetComponent<CapsuleCollider2D>();
-        myFeetCollier = GetComponent<BoxCollider2D>();
+        myFeetCollider = GetComponent<BoxCollider2D>();
         gravityScaleAtStart = myRigidBody.gravityScale;
         playerHealth = maxHealth;
         spriteRenderer = GetComponent<SpriteRenderer>();
         canPain = true;
+        isAlive = true;
+        if (healthBar == null)
+        {
+            healthBar = FindObjectOfType<HealthBar>();
+        }
     }
 
     void Update()
@@ -49,38 +54,16 @@ public class PlayerMovementScript : MonoBehaviour
         {
             return;
         }
-        horizontal = Input.GetAxis("Horizontal");
         Run();
         ClimbLadder();
         FlipSprite();
-        Die();
+        Hurt(0);
         Bouncing();
-    }
-
-    private void FixedUpdate()
-    {
-        if (KBCounter <= 0)
-        {
-            myRigidBody.velocity = new Vector2(horizontal * runSpeed, myRigidBody.velocity.y);
-        }
-        else
-        {
-            if (KnockFromRight == true)
-            {
-                myRigidBody.velocity = new Vector2(-KBForce, KBForce);
-            }
-            if (KnockFromRight == false)
-            {
-                myRigidBody.velocity = new Vector2(KBForce, KBForce);
-            }
-
-            KBCounter -= Time.deltaTime;
-        }
     }
 
     void ClimbLadder()
     {
-        if (!myFeetCollier.IsTouchingLayers(LayerMask.GetMask("Climbing")))
+        if (!myFeetCollider.IsTouchingLayers(LayerMask.GetMask("Climbing")))
         {
             myRigidBody.gravityScale = gravityScaleAtStart;
             myAnimator.SetBool("IsClimbing", false);
@@ -122,7 +105,7 @@ public class PlayerMovementScript : MonoBehaviour
             return;
         }
 
-        if (!(myFeetCollier.IsTouchingLayers(LayerMask.GetMask("Ground")) || myFeetCollier.IsTouchingLayers(LayerMask.GetMask("Climbing"))))
+        if (!(myFeetCollider.IsTouchingLayers(LayerMask.GetMask("Ground")) || myFeetCollider.IsTouchingLayers(LayerMask.GetMask("Climbing"))))
         {
             return;
         }
@@ -142,25 +125,38 @@ public class PlayerMovementScript : MonoBehaviour
         moveInput = value.Get<Vector2>();
     }
 
-    void Die()
+    public void Hurt(int option)
     {
-        if (playerHealth <= 0)
+        if (playerHealth == 0)
         {
-            playerHealth = 0;
+            isAlive = false;
+            gameOverScreen.SetActive(true);
             Time.timeScale = 0;
         }
-        if (myCapsuleCollider.IsTouchingLayers(LayerMask.GetMask("Enemies")) && canPain)
+        if (option == 0)
+        {
+            if ((myCapsuleCollider.IsTouchingLayers(LayerMask.GetMask("Enemies")) && canPain))
+            {
+                StartCoroutine(Pain());
+                BlinkSprites(2.0f, 0.15f);
+                Knockback();
+            }
+        }
+        else
         {
             StartCoroutine(Pain());
-            BlinkSprites(1.0f, 0.15f);
+            BlinkSprites(2.0f, 0.15f);
+            Knockback();
         }
     }
+
 
     IEnumerator Pain()
     {
         if (canPain)
         {
             playerHealth -= 1;
+            healthBar.UpdateUI(playerHealth);
             canPain = false;
         }
 
@@ -170,7 +166,7 @@ public class PlayerMovementScript : MonoBehaviour
 
     void Bouncing()
     {
-        if (myFeetCollier.IsTouchingLayers(LayerMask.GetMask("Bouncing")) && !(myFeetCollier.IsTouchingLayers(LayerMask.GetMask("Ground"))))
+        if (myFeetCollider.IsTouchingLayers(LayerMask.GetMask("Bouncing")) && !(myFeetCollider.IsTouchingLayers(LayerMask.GetMask("Ground"))))
         {
             AudioManager.instance.PlaySFX(AudioManager.instance.bounceSound);
         }
@@ -204,5 +200,20 @@ public class PlayerMovementScript : MonoBehaviour
     private void ToggleSprites(bool visible)
     {
         spriteRenderer.enabled = visible;
+    }
+
+    private void Knockback()
+    {
+        Vector2 knockbackDirection = (new Vector2(transform.position.x, transform.position.y) - myCapsuleCollider.ClosestPoint(transform.position)).normalized;
+        myRigidBody.AddForce(knockbackDirection * knockbackForce, ForceMode2D.Impulse);
+        StartCoroutine(KnockbackCoroutine());
+    }
+
+    IEnumerator KnockbackCoroutine()
+    {
+        float originalGravity = myRigidBody.gravityScale;
+        myRigidBody.gravityScale = 0;
+        yield return new WaitForSeconds(knockbackDuration);
+        myRigidBody.gravityScale = originalGravity;
     }
 }

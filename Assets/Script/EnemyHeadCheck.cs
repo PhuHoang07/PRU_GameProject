@@ -17,7 +17,7 @@ public class EnemyHeadCheck : MonoBehaviour
     {
         if (collision.GetComponent<PlayerCheck>())
         {
-            rb.velocity = new Vector2(rb.velocity.x, 40);
+            rb.velocity = new Vector2(rb.velocity.x, 20);
             rb.AddForce(Vector2.up * 300f);
         }
     }

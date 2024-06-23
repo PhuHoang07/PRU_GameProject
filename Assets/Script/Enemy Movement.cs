@@ -7,7 +7,7 @@ public class EnemyMovement : MonoBehaviour
     Rigidbody2D myRigidBody;
 
     [SerializeField] private float speed = 2f;
-    [SerializeField] private float changeDirectionTime = 4f;
+    [SerializeField] private float changeDirectionTime = 10f;
 
     private Rigidbody2D rb;
     private float timer;

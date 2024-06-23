@@ -42,7 +42,7 @@ public class UIManager : MonoBehaviour
 
     public void ReplayGameControl()
     {
-        SceneManager.LoadScene(1);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         Time.timeScale = 1;
     }
 
