@@ -91,37 +91,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 5316372501790539654}
---- !u!1 &3645683215888462206
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8208267356021635740}
-  m_Layer: 8
-  m_Name: EnemyCheck
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &8208267356021635740
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3645683215888462206}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6192065978214202385}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5316372501790539654
 GameObject:
   m_ObjectHideFlags: 0
@@ -159,7 +128,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3543396739345575901}
-  - {fileID: 8208267356021635740}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &3777363254079252441
@@ -347,6 +315,7 @@ MonoBehaviour:
   knockbackDuration: 1
   knockbackForce: 20
   gameOverScreen: {fileID: 4570626623935627561, guid: c35c287ab9263d749b02535c03ee356c, type: 3}
+  enemyHeadCheck: {fileID: 786116429169504035}
 --- !u!61 &3560024001390767712
 BoxCollider2D:
   m_ObjectHideFlags: 0

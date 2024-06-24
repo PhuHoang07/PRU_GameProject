@@ -9,7 +9,6 @@ public class GameOverScript : MonoBehaviour
     {
         Time.timeScale = 1;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-        Debug.Log("restart");
     }
 
     public void ReturnToMainMenu()

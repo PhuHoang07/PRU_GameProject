@@ -19,6 +19,7 @@ public class PlayerMovementScript : MonoBehaviour
     public float knockbackForce = 20f;
 
     public GameObject gameOverScreen;
+    public GameObject enemyHeadCheck;
 
     private SpriteRenderer spriteRenderer;
     Vector2 moveInput;
@@ -28,8 +29,13 @@ public class PlayerMovementScript : MonoBehaviour
     BoxCollider2D myFeetCollider;
     float gravityScaleAtStart;
     bool isAlive;
+    bool isControllable;
 
     private HealthBar healthBar;
+
+    private bool isInWater = false;
+    private float timeInWater;
+    private float waterThreshold = 3f;
 
     void Start()
     {
@@ -42,6 +48,7 @@ public class PlayerMovementScript : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         canPain = true;
         isAlive = true;
+        isControllable = true;
         if (healthBar == null)
         {
             healthBar = FindObjectOfType<HealthBar>();
@@ -50,7 +57,7 @@ public class PlayerMovementScript : MonoBehaviour
 
     void Update()
     {
-        if (!isAlive)
+        if (!isAlive || !isControllable)
         {
             return;
         }
@@ -100,7 +107,7 @@ public class PlayerMovementScript : MonoBehaviour
 
     void OnJump(InputValue inputValue)
     {
-        if (!isAlive)
+        if (!isAlive || !isControllable)
         {
             return;
         }
@@ -113,43 +120,63 @@ public class PlayerMovementScript : MonoBehaviour
         if (inputValue.isPressed)
         {
             myRigidBody.velocity += new Vector2(0f, jumpSpeed);
+            enemyHeadCheck.SetActive(true);
         }
     }
 
     void OnMove(InputValue value)
     {
-        if (!isAlive)
+        if (!isAlive || !isControllable)
         {
+            moveInput = Vector2.zero;
             return;
         }
         moveInput = value.Get<Vector2>();
+    }
+
+    private void GameOver()
+    {
+        isAlive = false;
+        gameOverScreen.SetActive(true);
+        Time.timeScale = 0;
     }
 
     public void Hurt(int option)
     {
         if (playerHealth == 0)
         {
-            isAlive = false;
-            gameOverScreen.SetActive(true);
-            Time.timeScale = 0;
-        }
-        if (option == 0)
-        {
-            if ((myCapsuleCollider.IsTouchingLayers(LayerMask.GetMask("Enemies")) && canPain))
-            {
-                StartCoroutine(Pain());
-                BlinkSprites(2.0f, 0.15f);
-                Knockback();
-            }
+            GameOver();
         }
         else
         {
-            StartCoroutine(Pain());
-            BlinkSprites(2.0f, 0.15f);
-            Knockback();
+            if (option == 0)
+            {
+                if ((myCapsuleCollider.IsTouchingLayers(LayerMask.GetMask("Enemies")) && canPain))
+                {
+                    StartCoroutine(Pain());
+                    BlinkSprites(2.0f, 0.15f);
+                    StartCoroutine(DisableMovementForSeconds(1.0f));
+                }
+            }
+            else
+            {
+                StartCoroutine(Pain());
+                BlinkSprites(2.0f, 0.15f);
+            }
         }
+
     }
 
+    IEnumerator DisableMovementForSeconds(float seconds)
+    {
+        isControllable = false;
+        myAnimator.SetBool("IsRunning", false);
+        myAnimator.SetBool("IsClimbing", false);
+        myRigidBody.velocity = Vector2.zero;
+        moveInput = Vector2.zero;
+        yield return new WaitForSeconds(seconds);
+        isControllable = true;
+    }
 
     IEnumerator Pain()
     {
@@ -157,6 +184,11 @@ public class PlayerMovementScript : MonoBehaviour
         {
             playerHealth -= 1;
             healthBar.UpdateUI(playerHealth);
+            if (playerHealth == 0)
+            {
+                GameOver();
+                yield break;
+            }
             canPain = false;
         }
 
@@ -202,18 +234,39 @@ public class PlayerMovementScript : MonoBehaviour
         spriteRenderer.enabled = visible;
     }
 
-    private void Knockback()
+    private void OnCollisionEnter2D(Collision2D collision)
     {
-        Vector2 knockbackDirection = (new Vector2(transform.position.x, transform.position.y) - myCapsuleCollider.ClosestPoint(transform.position)).normalized;
-        myRigidBody.AddForce(knockbackDirection * knockbackForce, ForceMode2D.Impulse);
-        StartCoroutine(KnockbackCoroutine());
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Ground") || collision.gameObject.layer == LayerMask.NameToLayer("Climbing"))
+        {
+            enemyHeadCheck.SetActive(false);
+        }
     }
 
-    IEnumerator KnockbackCoroutine()
+    private void OnTriggerExit2D(Collider2D collision)
     {
-        float originalGravity = myRigidBody.gravityScale;
-        myRigidBody.gravityScale = 0;
-        yield return new WaitForSeconds(knockbackDuration);
-        myRigidBody.gravityScale = originalGravity;
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Climbing"))
+        {
+            enemyHeadCheck.SetActive(true);
+        }
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Water"))
+        {
+            isInWater = false;
+            timeInWater = 0f;
+        }
+    }
+
+    private void OnTriggerStay2D(Collider2D collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Water"))
+        {
+            isInWater = true;
+            timeInWater += Time.deltaTime;
+
+            if (timeInWater >= waterThreshold)
+            {
+                timeInWater = 0f;
+                Hurt(1);
+            }
+        }
     }
 }
