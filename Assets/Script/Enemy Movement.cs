@@ -43,10 +43,11 @@ public class EnemyMovement : MonoBehaviour
     {
         if (collision.CompareTag("Ground"))
         {
-            if (collision.gameObject.layer == LayerMask.NameToLayer("Ground"))
-            {
-                timer = -timer;
-            }
+            timer = -timer;
+        }
+        if (collision.CompareTag("Wall"))
+        {
+            timer = -timer;
         }
     }
 
