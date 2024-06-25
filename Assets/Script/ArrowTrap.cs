@@ -16,6 +16,7 @@ public class ArrowTrap : MonoBehaviour
         arrows[FindArrow()].transform.position = firePoint.position;
         arrows[FindArrow()].GetComponent<ArrowProjectile>().ActivateProjectile();
     }
+
     private int FindArrow()
     {
         for (int i = 0; i < arrows.Length; i++)
@@ -25,6 +26,7 @@ public class ArrowTrap : MonoBehaviour
         }
         return 0;
     }
+
     private void Update()
     {
         cooldownTimer += Time.deltaTime;

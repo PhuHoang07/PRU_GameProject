@@ -65,7 +65,7 @@ BoxCollider2D:
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -0.032080173, y: -0.53333664}
+  m_Offset: {x: -0.0363158, y: -0.5375722}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -76,7 +76,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.46265316, y: 0.06966877}
+  m_Size: {x: 0.4937141, y: 0.07813999}
   m_EdgeRadius: 0
 --- !u!114 &6560107890454377829
 MonoBehaviour:
@@ -316,6 +316,9 @@ MonoBehaviour:
   knockbackForce: 20
   gameOverScreen: {fileID: 4570626623935627561, guid: c35c287ab9263d749b02535c03ee356c, type: 3}
   enemyHeadCheck: {fileID: 786116429169504035}
+  isInWater: 0
+  timeInWater: 0
+  isOnLadder: 0
 --- !u!61 &3560024001390767712
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -348,7 +351,7 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -0.031885624, y: -0.44976318}
+  m_Offset: {x: -0.032910347, y: -0.44566596}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -359,5 +362,5 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.42652416, y: 0.10047364}
+  m_Size: {x: 0.3466282, y: 0.092279196}
   m_EdgeRadius: 0

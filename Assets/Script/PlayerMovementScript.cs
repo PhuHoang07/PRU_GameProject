@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
+using UnityEditor.Animations;
+using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class PlayerMovementScript : MonoBehaviour
 {
@@ -33,9 +35,11 @@ public class PlayerMovementScript : MonoBehaviour
 
     private HealthBar healthBar;
 
-    private bool isInWater = false;
-    private float timeInWater;
+    public bool isInWater;
+    public float timeInWater;
     private float waterThreshold = 3f;
+
+    public bool isOnLadder = false;
 
     void Start()
     {
@@ -49,6 +53,8 @@ public class PlayerMovementScript : MonoBehaviour
         canPain = true;
         isAlive = true;
         isControllable = true;
+        isInWater = false;
+        enemyHeadCheck.SetActive(false);
         if (healthBar == null)
         {
             healthBar = FindObjectOfType<HealthBar>();
@@ -68,6 +74,19 @@ public class PlayerMovementScript : MonoBehaviour
         Bouncing();
     }
 
+    private void FixedUpdate()
+    {
+        if (isInWater)
+        {
+            timeInWater += Time.fixedDeltaTime;
+            if (timeInWater >= waterThreshold)
+            {
+                timeInWater = 0f;
+                Hurt(1);
+            }
+        }
+    }
+
     void ClimbLadder()
     {
         if (!myFeetCollider.IsTouchingLayers(LayerMask.GetMask("Climbing")))
@@ -83,6 +102,7 @@ public class PlayerMovementScript : MonoBehaviour
 
         bool playerHasVerticalSpeed = Mathf.Abs(myRigidBody.velocity.y) > Mathf.Epsilon;
         myAnimator.SetBool("IsClimbing", playerHasVerticalSpeed);
+        enemyHeadCheck.SetActive(false);
     }
 
     private void FlipSprite()
@@ -121,6 +141,7 @@ public class PlayerMovementScript : MonoBehaviour
         {
             myRigidBody.velocity += new Vector2(0f, jumpSpeed);
             enemyHeadCheck.SetActive(true);
+            Debug.Log("jump");
         }
     }
 
@@ -155,7 +176,7 @@ public class PlayerMovementScript : MonoBehaviour
                 {
                     StartCoroutine(Pain());
                     BlinkSprites(2.0f, 0.15f);
-                    StartCoroutine(DisableMovementForSeconds(1.0f));
+                    StartCoroutine(DisableMovementForSeconds(0.5f));
                 }
             }
             else
@@ -236,18 +257,41 @@ public class PlayerMovementScript : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.layer == LayerMask.NameToLayer("Ground") || collision.gameObject.layer == LayerMask.NameToLayer("Climbing"))
+        int layer = collision.gameObject.layer;
+        if (layer == LayerMask.NameToLayer("Ground"))
         {
+            if (!myAnimator.GetBool("IsClimbing"))
+            {
+                Debug.Log("touch ground");
+                enemyHeadCheck.SetActive(false);
+            }
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        int layer = collision.gameObject.layer;
+        
+        if (layer == LayerMask.NameToLayer("Climbing") && myFeetCollider.IsTouchingLayers(LayerMask.GetMask("Climbing")))
+        {
+            Debug.Log("on ladder");
             enemyHeadCheck.SetActive(false);
         }
     }
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        if (collision.gameObject.layer == LayerMask.NameToLayer("Climbing"))
+        int layer = collision.gameObject.layer;
+
+        if (layer == LayerMask.NameToLayer("Climbing"))
         {
-            enemyHeadCheck.SetActive(true);
+            if (!myFeetCollider.IsTouchingLayers(LayerMask.GetMask("Ground")) && !myFeetCollider.IsTouchingLayers(LayerMask.GetMask("Climbing")))
+            {
+                Debug.Log("out of ladder");
+                enemyHeadCheck.SetActive(true);
+            }
         }
+
         if (collision.gameObject.layer == LayerMask.NameToLayer("Water"))
         {
             isInWater = false;
@@ -260,13 +304,6 @@ public class PlayerMovementScript : MonoBehaviour
         if (collision.gameObject.layer == LayerMask.NameToLayer("Water"))
         {
             isInWater = true;
-            timeInWater += Time.deltaTime;
-
-            if (timeInWater >= waterThreshold)
-            {
-                timeInWater = 0f;
-                Hurt(1);
-            }
         }
     }
 }
